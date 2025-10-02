@@ -1,13 +1,20 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DSO_Utilities.Hotkeys
 {
+
+    [Flags]
+    public enum ModifierKeys : uint
+    {
+        None = 0,
+        Alt = 1,
+        Control = 2,
+        Shift = 4,
+        Win = 8
+    }
+
     public class GlobalHotkey
     {
         [DllImport("user32.dll")]
@@ -18,16 +25,16 @@ namespace DSO_Utilities.Hotkeys
         private readonly int id;
         private readonly IntPtr handle;
 
-        public Keys key { get;  }
+        public Keys key { get; }
         public event Action Pressed;
 
-        public GlobalHotkey(IntPtr handle, int id, Keys key)
+        public GlobalHotkey(IntPtr handle, int id, Keys key, ModifierKeys? modifiers = 0)
         {
             this.handle = handle;
             this.id = id;
             this.key = key;
 
-            RegisterHotKey(handle, id, 0, (uint)key);
+            RegisterHotKey(handle, id, (uint)modifiers, (uint)key);
         }
 
         public void ProcessMessage(Message m)
