@@ -11,10 +11,9 @@ namespace DSO_Utilities.Hotkeys
     public class GlobalHotkey
     {
         [DllImport("user32.dll")]
-        private static extern bool RegisterHotkey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
-
+        private static extern bool RegisterHotKey(IntPtr hWnd, int id, uint fsModifiers, uint vk);
         [DllImport("user32.dll")]
-        private static extern bool UnregisterHotkey(IntPtr hwnd, int id);
+        private static extern bool UnregisterHotKey(IntPtr hWnd, int id);
 
         private readonly int id;
         private readonly IntPtr handle;
@@ -28,7 +27,7 @@ namespace DSO_Utilities.Hotkeys
             this.id = id;
             this.key = key;
 
-            RegisterHotkey(handle, id, 0, (uint)key);
+            RegisterHotKey(handle, id, 0, (uint)key);
         }
 
         public void ProcessMessage(Message m)
@@ -42,7 +41,7 @@ namespace DSO_Utilities.Hotkeys
 
         public void Dispose()
         {
-            UnregisterHotkey(handle, id);
+            UnregisterHotKey(handle, id);
         }
     }
 }

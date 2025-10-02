@@ -22,6 +22,35 @@ namespace DSO_Utilities
         private Label rightKeyLabel;
         private ConfigData config;
 
+        private GlobalHotkey leftHotkeyReg;
+        private GlobalHotkey rightHotkeyReg;
+
+        protected override void OnHandleCreated(EventArgs e)
+        {
+            base.OnHandleCreated(e);
+
+            leftHotkeyReg = new GlobalHotkey(this.Handle, 1, hotkeys.LeftHotkey);
+            rightHotkeyReg = new GlobalHotkey(this.Handle, 2, hotkeys.RightHotkey);
+
+            leftHotkeyReg.Pressed += ToggleLeftClicker;
+            rightHotkeyReg.Pressed += ToggleRightClicker;
+
+        }
+
+        protected override void WndProc(ref Message m)
+        {
+            leftHotkeyReg?.ProcessMessage(m);
+            rightHotkeyReg?.ProcessMessage(m);
+            base.WndProc(ref m);
+        }
+
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            leftHotkeyReg.Dispose();
+            rightHotkeyReg.Dispose();
+            base.OnFormClosed(e);
+        }
+
         public MainForm()
         {
             InitializeComponent();
@@ -94,6 +123,16 @@ namespace DSO_Utilities
                 else
                     clickers.RightClicker.Start((int)sleepInput.Value);
             }
+        }
+        private void ToggleLeftClicker()
+        {
+            if (clickers.LeftClicker.IsRunning) clickers.LeftClicker.Stop();
+            else clickers.LeftClicker.Start((int)sleepInput.Value);
+        }
+        private void ToggleRightClicker()
+        {
+            if (clickers.RightClicker.IsRunning) clickers.RightClicker.Stop();
+            else clickers.RightClicker.Start((int)sleepInput.Value);
         }
     }
 }
