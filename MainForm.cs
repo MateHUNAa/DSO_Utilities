@@ -36,6 +36,7 @@ namespace DSO_Utilities
             hotkeys = new HotkeyManager();
 
             config = ConfigManager.Load();
+            hotkeys.SetHotkeys(config.LeftHotkey, config.RightHotkey);
         
             // UI controls
             Label sleepLbl = new Label() { Text = "Sleep (ms):", Left = 20, Top = 20, AutoSize = true };

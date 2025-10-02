@@ -37,5 +37,17 @@ namespace DSO_Utilities.Hotkeys
 
             return false;
         }
+
+        /// <summary>
+        /// Sets hotkeys from config values (string names like "F6" or "A")
+        /// </summary>
+        public void SetHotkeys(string left, string right)
+        {
+            if (Enum.TryParse(left, out Keys l))
+                LeftHotkey = l;
+
+            if (Enum.TryParse(right, out Keys r))
+                RightHotkey = r;
+        }
     }
 }
