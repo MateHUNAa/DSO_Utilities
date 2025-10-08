@@ -69,6 +69,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Revive\ReviveMacroManager.cs" />
     <Compile Include="UI\ToastNotifier.cs" />
+    <Compile Include="Updater\GithubClient.cs" />
+    <Compile Include="Updater\UpdateChecker.cs" />
+    <Compile Include="Updater\Updater.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
