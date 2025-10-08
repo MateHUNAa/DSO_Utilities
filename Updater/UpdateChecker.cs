@@ -36,6 +36,7 @@ namespace DSO_Utilities.Updater
                     }
 
                     string zipPath = await DownloadFileAsync(asset.browser_download_url);
+                    Updater.ReplaceWith(zipPath);
                 }
             }
         }
@@ -48,17 +49,12 @@ namespace DSO_Utilities.Updater
             string dest = Path.Combine(tempDir, "update.zip");
 
             using (var httpClient = new HttpClient())
+            using (var response = await httpClient.GetAsync(url, HttpCompletionOption.ResponseHeadersRead))
+            using (var stream = await response.Content.ReadAsStreamAsync())
+            using (var fileStream = File.Create(dest))
             {
-                httpClient.DefaultRequestHeaders.UserAgent.ParseAdd("DSO-Utilities-Updater");
-
-                using (var stream = await httpClient.GetStreamAsync(url))
-                {
-                    using (var file = File.Create(dest))
-                    {
-                        await stream.CopyToAsync(file);
-                        return dest;
-                    };
-                }
+                await stream.CopyToAsync(fileStream);
+                return dest;
             }
         }
     }
