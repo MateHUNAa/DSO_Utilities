@@ -26,13 +26,18 @@ namespace DSO_Utilities.Hotkeys
         private readonly IntPtr handle;
 
         public Keys key { get; }
+        public ModifierKeys Modifiers { get; }
+
         public event Action Pressed;
 
-        public GlobalHotkey(IntPtr handle, int id, Keys key, ModifierKeys? modifiers = 0)
+        public GlobalHotkey(IntPtr handle, int id, Keys key, ModifierKeys modifiers = ModifierKeys.None)
         {
             this.handle = handle;
             this.id = id;
             this.key = key;
+            this.Modifiers = modifiers;
+            
+            
 
             RegisterHotKey(handle, id, (uint)modifiers, (uint)key);
         }

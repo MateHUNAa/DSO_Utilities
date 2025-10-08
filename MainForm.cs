@@ -1,14 +1,10 @@
 ﻿using DSO_Utilities.Clicker;
 using DSO_Utilities.Config;
 using DSO_Utilities.Hotkeys;
+using DSO_Utilities.Revive;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DSO_Utilities
@@ -21,6 +17,9 @@ namespace DSO_Utilities
         private Label leftKeyLabel;
         private Label rightKeyLabel;
         private ConfigData config;
+        private ReviveMacroManager reviveMacros;
+
+        private readonly Dictionary<string, Label> labels = new Dictionary<string, Label>();
 
         private GlobalHotkey leftHotkeyReg;
         private GlobalHotkey rightHotkeyReg;
@@ -35,19 +34,25 @@ namespace DSO_Utilities
             leftHotkeyReg.Pressed += ToggleLeftClicker;
             rightHotkeyReg.Pressed += ToggleRightClicker;
 
+            reviveMacros = new ReviveMacroManager(this.Handle, config, OnRevivePositionSaved);
         }
-
+        private void OnRevivePositionSaved(string slot, Point pos)
+        {
+            MessageBox.Show($"Saved position for {slot}: {pos}");
+        }
         protected override void WndProc(ref Message m)
         {
             leftHotkeyReg?.ProcessMessage(m);
             rightHotkeyReg?.ProcessMessage(m);
+            reviveMacros?.ProcessMessage(m);
             base.WndProc(ref m);
         }
 
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
-            leftHotkeyReg.Dispose();
-            rightHotkeyReg.Dispose();
+            leftHotkeyReg?.Dispose();
+            rightHotkeyReg?.Dispose();
+            reviveMacros?.Dispose();
             base.OnFormClosed(e);
         }
 
