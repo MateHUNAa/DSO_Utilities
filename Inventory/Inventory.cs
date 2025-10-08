@@ -16,6 +16,9 @@ namespace DSO_Utilities
         private readonly InputSimulator _input;
         private readonly string _tempPath;
 
+        [DllImport("kernel32.dll")]
+        private static extern bool AllocConsole();
+
         [DllImport("user32.dll")]
         private static extern bool BlockInput(bool fBlockIt);
 
@@ -33,10 +36,11 @@ namespace DSO_Utilities
 
         public Inventory(string templatePath)
         {
+            //AllocConsole();
             _input = new InputSimulator();
             _tempPath = templatePath;
         }
-        public async Task ScanAndSell(IntPtr hWnd)
+        public async Task ScanAndSell(IntPtr hWnd, int bagNumber=0)
         {
             int rows = 4;
             int cols = 7;
@@ -72,28 +76,31 @@ namespace DSO_Utilities
                     Point[] minLocations, maxLocations;
                     result.MinMax(out minValues, out maxValues, out minLocations, out maxLocations);
 
-                    if (maxValues[0] > 0.41)
-                    {
-                        string foundPath = Path.Combine(folderPath, $"found_{row}_{col}.png");
-                        Rectangle matchRect = new Rectangle(maxLocations[0], template.Size);
-                        cellImg.Draw(matchRect, new Gray(255), 2);
-                        cellImg.Save(foundPath);
+                    Console.WriteLine($"bag{bagNumber} row:{row} col:{col} pred:{maxValues[0]}");
 
+                    if (maxValues[0] > 0.39)
+                    {
+                        //string foundPath = Path.Combine(folderPath, $"found_{row}_{col}.png");
+                        //Rectangle matchRect = new Rectangle(maxLocations[0], template.Size);
+                        //cellImg.Draw(matchRect, new Gray(255), 2);
+                        //cellImg.Save(foundPath);
 
                         GetWindowRect(hWnd, out RECT windowRect);
                         int windowX = windowRect.Left;
                         int windowY = windowRect.Top;
 
-                        //Cursor.Position = new Point(
-                        //    windowX + cellX + maxLocations[0].X + template.Width / 2,
-                        //    windowY + cellY + maxLocations[0].Y + template.Height / 2
-                        //);
+                        Cursor.Position = new Point(
+                            windowX + cellX + maxLocations[0].X + template.Width / 2,
+                            windowY + cellY + maxLocations[0].Y + template.Height / 2
+                        );
 
-                        await Task.Delay(200);
-                        //_input.Mouse.RightButtonClick();
+                        await Task.Delay(35);
+                        _input.Mouse.RightButtonClick();
+                        await Task.Delay(35);
                     }
                 }
             }
+            Console.WriteLine("--------------------------------");
         }
         public async Task ScanAllBags(IntPtr hWnd)
         {
@@ -107,13 +114,15 @@ namespace DSO_Utilities
             for (int bag = 0; bag<config.AmountOfBagsUnlocked; bag++)
             {
                 int mX = windowX + config.InventoryFirstBagPosition.X + (50*bag);
-                int mY = windowY + config.InventoryFirstBagPosition.Y;
+                int mY = windowY+ config.InventoryFirstBagPosition.Y;
 
                 Cursor.Position = new Point(mX,mY);
                 await Task.Delay(15);
                 _input.Mouse.LeftButtonClick();
-                await Task.Delay(500);
-                await ScanAndSell(hWnd);
+                await Task.Delay(25);
+                Cursor.Position = new Point(1, 1);
+                await Task.Delay(30);
+                await ScanAndSell(hWnd, bag);
             }
             BlockInput(false);
         }

@@ -143,7 +143,7 @@ namespace DSO_Utilities
         
             // UI controls
             Label sleepLbl = new Label() { Text = "Sleep (ms):", Left = 20, Top = 20, AutoSize = true };
-            sleepInput = new NumericUpDown() { Left = 100, Top = 18, Width = 80, Minimum = 1, Maximum = 10000, Value = 100 };
+            sleepInput = new NumericUpDown() { Left = 100, Top = 18, Width = 80, Minimum = 1, Maximum = 10000, Value = config.SleepTime };
 
             sleepInput.ValueChanged += (s,e) =>
             {
