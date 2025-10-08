@@ -1,6 +1,7 @@
 ﻿using DSO_Utilities.Clicker;
 using DSO_Utilities.Config;
 using DSO_Utilities.Hotkeys;
+using DSO_Utilities.UI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -16,7 +17,7 @@ namespace DSO_Utilities.Revive
         private readonly ConfigData config;
         private readonly IntPtr handle;
         private readonly Action<string, Point> onPositionSaved;
-        private readonly List<GlobalHotkey> registeredHotkeys = new List<GlobalHotkey>();
+        private readonly Dictionary<string, (GlobalHotkey normal, GlobalHotkey ctrl)> hotkeyMap = new Dictionary<string, (GlobalHotkey normal, GlobalHotkey ctrl)>();
 
         private readonly MouseClicker leftClicker = new MouseClicker(true);
 
@@ -44,11 +45,11 @@ namespace DSO_Utilities.Revive
 
                 var hotkey = new GlobalHotkey(handle, id++, key);
                 hotkey.Pressed += () =>  OnHotkeyPressed(slot, false);
-                registeredHotkeys.Add(hotkey);
 
                 var hkCtrl = new GlobalHotkey(handle, id++, key, ModifierKeys.Control);
                 hkCtrl.Pressed += () => OnHotkeyPressed(slot, true);
-                registeredHotkeys.Add(hkCtrl);
+
+                hotkeyMap[slot] = (hotkey, hkCtrl);
             }
         }
 
@@ -67,13 +68,13 @@ namespace DSO_Utilities.Revive
                 {
                     var prev = Cursor.Position;
                     Cursor.Position = pos;
-
+                    Task.Delay(500);
                     leftClicker.Stop();
                     mouse_event(0x02, 0, 0, 0, 0); // Left down
                     mouse_event(0x04, 0, 0, 0, 0); // Left up
-
+                    Task.Delay(500);
                     Cursor.Position = prev;
-                }
+                } 
             }
         }
 
@@ -82,17 +83,44 @@ namespace DSO_Utilities.Revive
 
         public void ProcessMessage(Message m )
         {
-            foreach (var hotkey in registeredHotkeys)
+            foreach (var (normal, ctrl) in hotkeyMap.Values)
             {
-                hotkey.ProcessMessage(m);
+                normal.ProcessMessage(m);
+                ctrl.ProcessMessage(m);
             }
         }
+        
+        public void UpdateHotkey(string slot, Keys newKey)
+        {
+            if (!hotkeyMap.ContainsKey(slot))
+                return;
+
+            var oldPair = hotkeyMap[slot];
+            oldPair.normal.Dispose();
+            oldPair.ctrl.Dispose();
+
+            config.ReviveHotkeys[slot] = newKey.ToString();
+            ConfigManager.Save(config);
+
+            int newId = slot.GetHashCode() & 0xFFFF;
+            var normal = new GlobalHotkey(handle, newId, newKey);
+            var ctrl = new GlobalHotkey(handle, newId +1, newKey, ModifierKeys.Control);
+
+            normal.Pressed += () => OnHotkeyPressed(slot, false);
+            ctrl.Pressed += () => OnHotkeyPressed(slot, true);
+
+            hotkeyMap[slot] = (normal, ctrl);
+        }
+
         public void Dispose()
         {
-            foreach (var hotkey in registeredHotkeys)
-                hotkey.Dispose();
-            
-            registeredHotkeys.Clear();
+            foreach (var (normal, ctrl) in hotkeyMap.Values)
+            {
+                normal?.Dispose();
+                ctrl?.Dispose();
+            }
+
+            hotkeyMap.Clear();
         }
     }
 }

@@ -2,6 +2,7 @@
 using DSO_Utilities.Config;
 using DSO_Utilities.Hotkeys;
 using DSO_Utilities.Revive;
+using DSO_Utilities.UI;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -11,6 +12,8 @@ namespace DSO_Utilities
 {
     public partial class MainForm : Form
     {
+        public static MainForm Instance { get; private set; }
+
         private ClickerManager clickers;
         private HotkeyManager hotkeys;
         private NumericUpDown sleepInput;
@@ -38,7 +41,7 @@ namespace DSO_Utilities
         }
         private void OnRevivePositionSaved(string slot, Point pos)
         {
-            MessageBox.Show($"Saved position for {slot}: {pos}");
+            ToastNotifier.Show(this, $"{slot} position saved ({pos.X}, {pos.Y})");
         }
         protected override void WndProc(ref Message m)
         {
@@ -59,10 +62,11 @@ namespace DSO_Utilities
         public MainForm()
         {
             InitializeComponent();
-
+            Instance = this;
+            
             this.Text = "DSO Utilities";
-            this.Width = 350;
-            this.Height = 250;
+            this.Width = 550;
+            this.Height = 500;
             this.KeyPreview = true;
             this.KeyDown += OnKeyDown;
 
@@ -98,6 +102,79 @@ namespace DSO_Utilities
             Controls.Add(leftKeyLabel);
             Controls.Add(setRightKeyBtn);
             Controls.Add(rightKeyLabel);
+
+            // ===========
+            // Revive Mapping Controls
+            // ===========
+
+            GroupBox reviveGroup = new GroupBox()
+            {
+                Text = "Revive Macro Bindings",
+                Left = 20,
+                Top = 150,
+                Width = 500,
+                Height = 220,
+            };
+
+            Controls.Add(reviveGroup);
+
+            int startY = 30;
+            for (int i =1;i<=5;i++)
+            {
+                string slot = $"Slot{i}";
+                string keyName = config.ReviveHotkeys.ContainsKey(slot)
+                    ? config.ReviveHotkeys[slot]
+                    : $"F{i}";
+
+                Label slotLbl = new Label()
+                {
+                    Text= $"Slot {i}",
+                    Left = 15,
+                    Top = startY + (i-1) * 35+5,
+                    AutoSize=true
+                };
+
+                Label keyLbl = new Label()
+                {
+                    Text = $"Key: {keyName}",
+                    Left = 80,
+                    Top = startY + (i - 1) * 35 + 5,
+                    Width = 120
+                };
+
+                Button setKeyBtn = new Button()
+                {
+                    Text = "Change Key",
+                    Left= 380,
+                    Top = startY + (i-1)*35,
+                    Width=90
+                };
+
+                setKeyBtn.Click += (s, e) =>
+                {
+                    keyLbl.Text = "Press key...";
+                    KeyEventHandler tempHandler = null;
+
+                    tempHandler = (sender, args) =>
+                    {
+                        this.KeyDown -= tempHandler;
+
+                        config.ReviveHotkeys[slot] = args.KeyCode.ToString();
+                        ConfigManager.Save(config);
+
+                        keyLbl.Text = $"Key: {args.KeyCode}";
+                        reviveMacros.UpdateHotkey(slot, args.KeyCode);
+
+                        ToastNotifier.Show(this, $"Bound {slot} to {args.KeyCode}");
+                    };
+
+                    this.KeyDown += tempHandler;
+                };
+
+                reviveGroup.Controls.Add(slotLbl);
+                reviveGroup.Controls.Add(keyLbl);
+                reviveGroup.Controls.Add(setKeyBtn);
+            }
         }
 
         private void OnKeyDown(object sender, KeyEventArgs e)
@@ -141,3 +218,4 @@ namespace DSO_Utilities
         }
     }
 }
+;
