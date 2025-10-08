@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
 
@@ -27,7 +28,6 @@ namespace DSO_Utilities.Hotkeys
 
         public Keys key { get; }
         public ModifierKeys Modifiers { get; }
-
         public event Action Pressed;
 
         public GlobalHotkey(IntPtr handle, int id, Keys key, ModifierKeys modifiers = ModifierKeys.None)

@@ -13,6 +13,9 @@ namespace DSO_Utilities.Config
         public string LeftHotkey { get; set; } = "F6";
         public string RightHotkey { get; set; } = "F7";
 
+        public Point InventoryFirstCellPosition { get; set; } = Point.Empty;
+        public Point InventoryFirstBagPosition { get; set; } = Point.Empty;
+        public int AmountOfBagsUnlocked { get; set; } = 9;
         public Dictionary<string, string> ReviveHotkeys {  get; set; } = new Dictionary<string, string>
         {
             { "Slot1", "F1" },

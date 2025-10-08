@@ -15,7 +15,9 @@ namespace DSO_Utilities
 
             try
             {
+#if RELEASE
                 Task.Run(async () => await UpdateChecker.CheckAsync()).Wait();
+#endif
             } catch (Exception ex)
             {
                 MessageBox.Show("Update check failed: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);

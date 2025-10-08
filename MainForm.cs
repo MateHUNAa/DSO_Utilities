@@ -5,7 +5,11 @@ using DSO_Utilities.Revive;
 using DSO_Utilities.UI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace DSO_Utilities
@@ -26,6 +30,11 @@ namespace DSO_Utilities
 
         private GlobalHotkey leftHotkeyReg;
         private GlobalHotkey rightHotkeyReg;
+        private GlobalHotkey scanInventory;
+        private GlobalHotkey panicHotkey;
+        private GlobalHotkey inventoryCellHotkey;
+        private GlobalHotkey inventoryBagHotkey;
+        private GlobalHotkey ScanAllBagHotkey;
 
         protected override void OnHandleCreated(EventArgs e)
         {
@@ -33,11 +42,57 @@ namespace DSO_Utilities
 
             leftHotkeyReg = new GlobalHotkey(this.Handle, 1, hotkeys.LeftHotkey);
             rightHotkeyReg = new GlobalHotkey(this.Handle, 2, hotkeys.RightHotkey);
+            scanInventory = new GlobalHotkey(this.Handle, 3, Keys.F8);
+            panicHotkey = new GlobalHotkey(this .Handle, 4, Keys.X, Hotkeys.ModifierKeys.Control | Hotkeys.ModifierKeys.Alt);
+            inventoryCellHotkey = new GlobalHotkey(this.Handle, 5, Keys.F9, Hotkeys.ModifierKeys.Control);
+            inventoryBagHotkey = new GlobalHotkey(this.Handle, 6, Keys.F10, Hotkeys.ModifierKeys.Control);
+            ScanAllBagHotkey = new GlobalHotkey(this.Handle, 7, Keys.F10);
 
             leftHotkeyReg.Pressed += ToggleLeftClicker;
             rightHotkeyReg.Pressed += ToggleRightClicker;
-
             reviveMacros = new ReviveMacroManager(this.Handle, config, OnRevivePositionSaved);
+            var game = Process.GetProcessesByName("thinclient").FirstOrDefault();
+
+            if (game==null || game.MainWindowHandle == IntPtr.Zero)
+            {
+                MessageBox.Show("Game process not found. Please start the game first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                Task.Delay(5000);
+                Application.Exit();
+            }
+
+            inventoryCellHotkey.Pressed += () =>
+            {
+                Point mouse = Inventory.GetMouseRelToWindow(game.MainWindowHandle);
+                config.InventoryFirstCellPosition = new Point(mouse.X, mouse.Y);
+                ConfigManager.Save(config);
+            };
+            inventoryBagHotkey.Pressed += () =>
+            {
+                Point mouse = Inventory.GetMouseRelToWindow(game.MainWindowHandle);
+                config.InventoryFirstBagPosition = new Point(mouse.X, mouse.Y);
+                ConfigManager.Save(config);
+            };
+
+
+            var scanner = new Inventory("Assets/question.png");
+            scanInventory.Pressed += () =>
+            {
+                Thread thread = new(() => scanner.ScanAndSell(game.MainWindowHandle));
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+            };
+
+            ScanAllBagHotkey.Pressed += () =>
+            {
+                Thread thread = new Thread(() => scanner.ScanAllBags(game.MainWindowHandle));
+                thread.SetApartmentState(ApartmentState.STA);
+                thread.Start();
+            };
+            panicHotkey.Pressed += () =>
+            {
+                Application.Exit();
+            };
+
         }
         private void OnRevivePositionSaved(string slot, Point pos)
         {
@@ -48,6 +103,11 @@ namespace DSO_Utilities
             leftHotkeyReg?.ProcessMessage(m);
             rightHotkeyReg?.ProcessMessage(m);
             reviveMacros?.ProcessMessage(m);
+            scanInventory?.ProcessMessage(m);
+            panicHotkey?.ProcessMessage(m);
+            inventoryCellHotkey?.ProcessMessage(m);
+            inventoryBagHotkey?.ProcessMessage(m);
+            ScanAllBagHotkey?.ProcessMessage(m);
             base.WndProc(ref m);
         }
 
@@ -56,6 +116,11 @@ namespace DSO_Utilities
             leftHotkeyReg?.Dispose();
             rightHotkeyReg?.Dispose();
             reviveMacros?.Dispose();
+            scanInventory?.Dispose();
+            panicHotkey?.Dispose();
+            inventoryCellHotkey?.Dispose();
+            inventoryBagHotkey?.Dispose();
+            ScanAllBagHotkey?.Dispose();
             base.OnFormClosed(e);
         }
 
